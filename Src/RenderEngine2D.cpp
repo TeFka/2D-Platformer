@@ -20,63 +20,6 @@ glm::vec4 vertices2D[6] =
     glm::vec4(1.0,1.0,1.0,1.0)
 };
 
-int RenderEngine2D::firstUnusedParticle(int type, int index)
-{
-    if(type==1)
-    {
-        for(int m = lastUsedParticle; m<particlesNr; m++)
-        {
-            if(this->temporaryParticleEffects[index]->particles[m].life<=0.0)
-            {
-                lastUsedParticle=m;
-                return m;
-            }
-        }
-        for(int m =0; m<lastUsedParticle; m++)
-        {
-            if(this->temporaryParticleEffects[index]->particles[m].life<=0.0)
-            {
-                lastUsedParticle=m;
-                return m;
-            }
-        }
-    }
-    else if(type==2)
-    {
-        for(int m = lastUsedParticle; m<particlesNr; m++)
-        {
-            if(this->constantParticleEffects[index]->particles[m].life<=0.0)
-            {
-                lastUsedParticle=m;
-                return m;
-            }
-        }
-        for(int m =0; m<lastUsedParticle; m++)
-        {
-            if(this->constantParticleEffects[index]->particles[m].life<=0.0)
-            {
-                lastUsedParticle=m;
-                return m;
-            }
-        }
-    }
-    lastUsedParticle=0;
-    return 0;
-
-}
-
-void  RenderEngine2D::respawnParticle(particle& partic,float partcLife, glm::vec2 pos, float velocity, glm::vec2 offSet, glm::vec4 col)
-{
-    float randomX = (1-(2*((float)(rand()%100)/100)));
-    float randomY = (1-(2*((float)(rand()%100)/100)));
-    partic.pos.x = pos.x+(randomX*offSet.x);
-    partic.pos.y = pos.y+(randomY*offSet.y);
-    partic.color = col;
-    partic.life = partcLife;
-    partic.velocity.x = randomX*velocity;
-    partic.velocity.y = randomY*velocity;
-}
-
 std::map<char, Character>  RenderEngine2D::setTextType(const char* filePath)
 {
     FT_Library ft;
@@ -464,11 +407,6 @@ void  RenderEngine2D::setText(const char* file)
     this->characters = setTextType(file);
 }
 
-void  RenderEngine2D::particleSetup(int particleStorageSize)
-{
-    this->particlesNr = particleStorageSize;
-}
-
 float  RenderEngine2D::getDeltaTime()
 {
     return this->deltaTime;
@@ -526,16 +464,45 @@ void  RenderEngine2D::writeText(int shaderIndex, std::string text, GLfloat wPart
     glDisable(GL_BLEND);
 }
 
-void  RenderEngine2D::setSprite(glm::vec2 pos, glm::vec2 siz, glm::vec4 color, int textN)
-{
-    this->vertices.push_back(basicVertex{glm::vec2(pos.x-siz.x/2,pos.y-siz.y/2),glm::vec2(0.0,1.0),color,textN-1});
-    this->vertices.push_back(basicVertex{glm::vec2(pos.x-siz.x/2,pos.y+siz.y/2),glm::vec2(0.0,0.0),color,textN-1});
-    this->vertices.push_back(basicVertex{glm::vec2(pos.x+siz.x/2,pos.y+siz.y/2),glm::vec2(1.0,0.0),color,textN-1});
-    this->vertices.push_back(basicVertex{glm::vec2(pos.x-siz.x/2,pos.y-siz.y/2),glm::vec2(0.0,1.0),color,textN-1});
-    this->vertices.push_back(basicVertex{glm::vec2(pos.x+siz.x/2,pos.y+siz.y/2),glm::vec2(1.0,0.0),color,textN-1});
-    this->vertices.push_back(basicVertex{glm::vec2(pos.x+siz.x/2,pos.y-siz.y/2),glm::vec2(1.0,1.0),color,textN-1});
+void RenderEngine2D::addParticle(glm::vec2 pos, glm::vec2 siz, glm::vec4 col, int textNum){
+
+    this->particleVertices.push_back(basicVertex{glm::vec2(pos.x-siz.x,pos.y-siz.y),glm::vec2(0.0,1.0),col,textNum});
+    this->particleVertices.push_back(basicVertex{glm::vec2(pos.x-siz.x,pos.y+siz.y),glm::vec2(0.0,0.0),col,textNum});
+    this->particleVertices.push_back(basicVertex{glm::vec2(pos.x+siz.x,pos.y+siz.y),glm::vec2(1.0,0.0),col,textNum});
+    this->particleVertices.push_back(basicVertex{glm::vec2(pos.x-siz.x,pos.y-siz.y),glm::vec2(0.0,1.0),col,textNum});
+    this->particleVertices.push_back(basicVertex{glm::vec2(pos.x+siz.x,pos.y+siz.y),glm::vec2(1.0,0.0),col,textNum});
+    this->particleVertices.push_back(basicVertex{glm::vec2(pos.x+siz.x,pos.y-siz.y),glm::vec2(1.0,1.0),col,textNum});
 }
-void  RenderEngine2D::setTransparentSprite(glm::vec2 pos, glm::vec2 siz, glm::vec4 color, int textN)
+
+void  RenderEngine2D::setSprite(glm::vec2 pos, glm::vec2 siz, glm::vec4 color, int textN, int rotationDeg)
+{
+
+    this->vertices.push_back(basicVertex{
+                             rotationDeg == 0 ? glm::vec2(pos.x-siz.x/2,pos.y-siz.y/2) : glm::vec2((cos(rotationDeg*PI/180)*(-siz.x/2)-sin(rotationDeg*PI/180)*(-siz.y/2))+pos.x,
+                                                                                                   (cos(rotationDeg*PI/180)*(-siz.y/2)+sin(rotationDeg*PI/180)*(-siz.x/2))+pos.y),
+                             glm::vec2(0.0,1.0),color,textN-1});
+    this->vertices.push_back(basicVertex{
+                             rotationDeg == 0 ? glm::vec2(pos.x-siz.x/2,pos.y+siz.y/2) : glm::vec2((cos(rotationDeg*PI/180)*(-siz.x/2)-sin(rotationDeg*PI/180)*(siz.y/2))+pos.x,
+                                                                                                   (cos(rotationDeg*PI/180)*(siz.y/2)+sin(rotationDeg*PI/180)*(-siz.x/2))+pos.y),
+                             glm::vec2(0.0,0.0),color,textN-1});
+    this->vertices.push_back(basicVertex{
+                             rotationDeg == 0 ? glm::vec2(pos.x+siz.x/2,pos.y+siz.y/2) : glm::vec2((cos(rotationDeg*PI/180)*(siz.x/2)-sin(rotationDeg*PI/180)*(siz.y/2))+pos.x,
+                                                                                                   (cos(rotationDeg*PI/180)*(siz.y/2)+sin(rotationDeg*PI/180)*(siz.x/2))+pos.y),
+                             glm::vec2(1.0,0.0),color,textN-1});
+    this->vertices.push_back(basicVertex{
+                             rotationDeg == 0 ? glm::vec2(pos.x-siz.x/2,pos.y-siz.y/2) : glm::vec2((cos(rotationDeg*PI/180)*(-siz.x/2)-sin(rotationDeg*PI/180)*(-siz.y/2))+pos.x,
+                                                                                                   (cos(rotationDeg*PI/180)*(-siz.y/2)+sin(rotationDeg*PI/180)*(-siz.x/2))+pos.y),
+                             glm::vec2(0.0,1.0),color,textN-1});
+    this->vertices.push_back(basicVertex{
+                             rotationDeg == 0 ? glm::vec2(pos.x+siz.x/2,pos.y+siz.y/2) : glm::vec2((cos(rotationDeg*PI/180)*(siz.x/2)-sin(rotationDeg*PI/180)*(siz.y/2))+pos.x,
+                                                                                                   (cos(rotationDeg*PI/180)*(siz.y/2)+sin(rotationDeg*PI/180)*(siz.x/2))+pos.y),
+                             glm::vec2(1.0,0.0),color,textN-1});
+    this->vertices.push_back(basicVertex{
+                             rotationDeg == 0 ? glm::vec2(pos.x+siz.x/2,pos.y-siz.y/2) : glm::vec2((cos(rotationDeg*PI/180)*(siz.x/2)-sin(rotationDeg*PI/180)*(-siz.y/2))+pos.x,
+                                                                                                   (cos(rotationDeg*PI/180)*(-siz.y/2)+sin(rotationDeg*PI/180)*(siz.x/2))+pos.y),
+                             glm::vec2(1.0,1.0),color,textN-1});
+}
+void  RenderEngine2D::setTransparentSprite(glm::vec2 pos, glm::vec2 siz, glm::vec4 color, int textN, int rotationDeg)
 {
     this->transparentVertices.push_back(basicVertex{glm::vec2(pos.x-siz.x/2,pos.y-siz.y/2),glm::vec2(0.0,1.0),color,textN-1});
     this->transparentVertices.push_back(basicVertex{glm::vec2(pos.x-siz.x/2,pos.y+siz.y/2),glm::vec2(0.0,0.0),color,textN-1});
@@ -543,145 +510,6 @@ void  RenderEngine2D::setTransparentSprite(glm::vec2 pos, glm::vec2 siz, glm::ve
     this->transparentVertices.push_back(basicVertex{glm::vec2(pos.x-siz.x/2,pos.y-siz.y/2),glm::vec2(0.0,1.0),color,textN-1});
     this->transparentVertices.push_back(basicVertex{glm::vec2(pos.x+siz.x/2,pos.y+siz.y/2),glm::vec2(1.0,0.0),color,textN-1});
     this->transparentVertices.push_back(basicVertex{glm::vec2(pos.x+siz.x/2,pos.y-siz.y/2),glm::vec2(1.0,1.0),color,textN-1});
-}
-
-void  RenderEngine2D::createParticleEffect(glm::vec2 pos, float lifeTime, float partcLife, int particleGenerationRate, glm::vec2 siz, float speed, glm::vec2 offset,glm::vec4 color, int textNum, int state,int id)
-{
-    std::vector<particle> partcs;
-    for(i=0; i<this->particlesNr; i++)
-    {
-        partcs.push_back(particle());
-    }
-    if(state==1)
-    {
-        this->temporaryParticleEffects.push_back(new particleEffect{id,lifeTime,partcLife,particleGenerationRate,pos,offset,siz,speed,color,textNum,partcs});
-    }
-    else if(state==2)
-    {
-        this->constantParticleEffects.push_back(new particleEffect{id,lifeTime,partcLife,particleGenerationRate,pos,offset,siz,speed,color,textNum,partcs});
-    }
-}
-
-void  RenderEngine2D::updateParticleEffect(int id, glm::vec2 newPos)
-{
-    this->constantParticleEffects[id]->pos = newPos;
-}
-
-void  RenderEngine2D::makeParticleEffect()
-{
-    float randomX;
-    float randomY;
-    //temporary particles
-    for(int p = 0; p<this->temporaryParticleEffects.size(); p++)
-    {
-        this->temporaryParticleEffects[p]->life-=this->deltaTime;
-        if(this->temporaryParticleEffects[p]->life>0)
-        {
-            for (GLuint i = 0; i < this->temporaryParticleEffects[p]->particleGenerationRate; ++i)
-            {
-                int unusedParticle = firstUnusedParticle(1,p);
-                respawnParticle(this->temporaryParticleEffects[p]->particles[unusedParticle],this->temporaryParticleEffects[p]->partcLife,
-                                this->temporaryParticleEffects[p]->pos,this->temporaryParticleEffects[p]->velocity,
-                                this->temporaryParticleEffects[p]->offset, this->temporaryParticleEffects[p]->color);
-            }
-        }
-        int zeroParticles = 1;
-        for(i = 0; i<this->temporaryParticleEffects[p]->particles.size(); i++)
-        {
-            randomX = (1-(2*((float)(rand()%100)/100)));
-            randomY = (1-(2*((float)(rand()%100)/100)));
-            particle &tempP = this->temporaryParticleEffects[p]->particles[i];
-            tempP.life -= this->deltaTime;
-            // reduce life
-            if (tempP.life > 0.0f)
-            {
-                // particle is alive, thus update
-                tempP.pos += tempP.velocity * this->deltaTime;
-                tempP.color.a -= (this->deltaTime/this->temporaryParticleEffects[p]->partcLife);
-            }
-            if(tempP.life>0.0)
-            {
-                zeroParticles = 0;
-
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x-this->temporaryParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y-this->temporaryParticleEffects[p]->siz.y*randomY/2),glm::vec2(0.0,1.0),
-                                                 tempP.color,this->temporaryParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x-this->temporaryParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y+this->temporaryParticleEffects[p]->siz.y*randomY/2),glm::vec2(0.0,0.0),
-                                                 tempP.color,this->temporaryParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x+this->temporaryParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y+this->temporaryParticleEffects[p]->siz.y*randomY/2),glm::vec2(1.0,0.0),
-                                                 tempP.color,this->temporaryParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x-this->temporaryParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y-this->temporaryParticleEffects[p]->siz.y*randomY/2),glm::vec2(0.0,1.0),
-                                                 tempP.color,this->temporaryParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x+this->temporaryParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y+this->temporaryParticleEffects[p]->siz.y*randomY/2),glm::vec2(1.0,0.0),
-                                                 tempP.color,this->temporaryParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x+this->temporaryParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y-this->temporaryParticleEffects[p]->siz.y*randomY/2),glm::vec2(1.0,1.0),
-                                                 tempP.color,this->temporaryParticleEffects[p]->textNum-1});
-            }
-        }
-        if(zeroParticles)
-        {
-            this->particleEffectDestructor.push_back(p);
-        }
-    }
-
-    for(i = 0; i<this->particleEffectDestructor.size(); i++)
-    {
-        this->temporaryParticleEffects.erase(this->temporaryParticleEffects.begin()+this->particleEffectDestructor[i]);
-    }
-
-    this->particleEffectDestructor.clear();
-
-    //constant particles
-    for(int p = 0; p<this->constantParticleEffects.size(); p++)
-    {
-        for (GLuint i = 0; i < this->constantParticleEffects[p]->particleGenerationRate; ++i)
-        {
-            int unusedParticle = firstUnusedParticle(2,p);
-            respawnParticle(this->constantParticleEffects[p]->particles[unusedParticle],this->constantParticleEffects[p]->partcLife,
-                            this->constantParticleEffects[p]->pos,this->constantParticleEffects[p]->velocity,
-                            this->constantParticleEffects[p]->offset, this->constantParticleEffects[p]->color);
-        }
-        for(i = 0; i<this->constantParticleEffects[p]->particles.size(); i++)
-        {
-            randomX = (1-(2*((float)(rand()%100)/100)));
-            randomY = (1-(2*((float)(rand()%100)/100)));
-            particle &tempP = this->constantParticleEffects[p]->particles[i];
-            tempP.life -= deltaTime;
-            // reduce life
-            if (tempP.life > 0.0f)
-            {
-                // particle is alive, thus update
-                tempP.pos += tempP.velocity * this->deltaTime;
-                tempP.color.a -= (this->deltaTime/this->constantParticleEffects[p]->partcLife);
-            }
-            if(tempP.life>0.0)
-            {
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x-this->constantParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y-this->constantParticleEffects[p]->siz.y*randomY/2),glm::vec2(0.0,1.0),
-                                                 tempP.color,this->constantParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x-this->constantParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y+this->constantParticleEffects[p]->siz.y*randomY/2),glm::vec2(0.0,0.0),
-                                                 tempP.color,this->constantParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x+this->constantParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y+this->constantParticleEffects[p]->siz.y*randomY/2),glm::vec2(1.0,0.0),
-                                                 tempP.color,this->constantParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x-this->constantParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y-this->constantParticleEffects[p]->siz.y*randomY/2),glm::vec2(0.0,1.0),
-                                                 tempP.color,this->constantParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x+this->constantParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y+this->constantParticleEffects[p]->siz.y*randomY/2),glm::vec2(1.0,0.0),
-                                                 tempP.color,this->constantParticleEffects[p]->textNum-1});
-                this->particleVertices.push_back(basicVertex{glm::vec2(tempP.pos.x+this->constantParticleEffects[p]->siz.x*randomX/2,
-                                                 tempP.pos.y-this->constantParticleEffects[p]->siz.y*randomY/2),glm::vec2(1.0,1.0),
-                                                 tempP.color,this->constantParticleEffects[p]->textNum-1});
-            }
-        }
-    }
 }
 
 void  RenderEngine2D::clearVerts()

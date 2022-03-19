@@ -6,6 +6,7 @@ list(APPEND game_sources
     ${CMAKE_CURRENT_LIST_DIR}/Shader.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Texture.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Camera.cpp
+	${CMAKE_CURRENT_LIST_DIR}/ParticleEngine2D.cpp
 	${CMAKE_CURRENT_LIST_DIR}/RenderEngine2D.cpp
 	${CMAKE_CURRENT_LIST_DIR}/2DPlatformerGame.cpp
 	${CMAKE_CURRENT_LIST_DIR}/2DPlatformerGameLevel.cpp

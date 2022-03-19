@@ -1,6 +1,6 @@
 #include "../Inc/Weapon2D.h"
 
-Weapon2D::Weapon2D(float damage, float delay, float cost, float bSpeed, int textureN, int weaponShown)
+Weapon2D::Weapon2D(float damage, float delay, float cost, float bSpeed, int textureN, int bType, int weaponShow)
 {
 
     this->attackDamage = damage;
@@ -9,7 +9,8 @@ Weapon2D::Weapon2D(float damage, float delay, float cost, float bSpeed, int text
 
     this->textureNum = textureN;
     this->bulletSpeed = bSpeed;
-    this->weaponIsShown = weaponShown;
+    this->bullelttType = bType;
+    this->weaponShown = weaponShow;
 }
 
 float Weapon2D::getAttackDamage()
@@ -37,9 +38,9 @@ int Weapon2D::getBulletSpeed()
     return this->bulletSpeed;
 }
 
-int Weapon2D::getWeaponShown()
+int Weapon2D::weaponIsShown()
 {
-    return this->weaponIsShown;
+    return this->weaponShown;
 }
 
 void Weapon2D::setAttackDamage(float newAttack)
@@ -85,5 +86,11 @@ void Weapon2D::setBulletSpeed(int newBulletSpeed)
 
 void Weapon2D::setWeaponShown(int newShow)
 {
-    this->weaponIsShown = newShow;
+    this->weaponShown = newShow;
+}
+
+int Weapon2D::getType(){
+
+    return this->bullelttType;
+
 }

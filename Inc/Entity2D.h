@@ -28,10 +28,12 @@ class Entity2D
 
 protected:
 
+    RenderEngine2D* renderEngine;
     twoDPlatformerGame* theGame;
 
     glm::vec2 pos;
     glm::vec2 previousPos;
+    int entityTurn;
 
     glm::vec2 hitbox;
     glm::vec2 faceDirection;
@@ -43,16 +45,13 @@ protected:
 
     int blockedSides[4] = {0,0,0,0};
 
-    int fullHealth;
-    int health;
-    int healthRegeneration;
-    float takenDamage = 0;
+    float fullHealth;
+    float health;
+    float healthRegeneration;
 
-    int energy;
-    int fullEnergy;
-    int energyRegeneration;
-
-    float attackDelayValue;
+    float energy;
+    float fullEnergy;
+    float energyRegeneration;
 
     glm::vec4 color;
     int textureNum;
@@ -63,26 +62,29 @@ protected:
 
     std::vector<Bullet*> shotBullets;
 
-    int activeWeaponNum;
+    std::vector<weaponInfo*> activeWeapons;
+    int weaponTurn = 0;
 
     int iteration = 0;
 
-    void generalUpdate(float);
+    void generalUpdate();
 
-    void updateMovement(float);
+    void updateMovement();
 
-    void collisionDetection(RenderEngine2D*, float);
+    void collisionDetection();
 
-    void shoot(glm::vec4);
+    void useWeapon(glm::vec4, int=0);
 
-    void generalBulletUpdate(float);
+    void generalBulletUpdate();
+
+    void physicsUpdate();
 
 public:
-    Entity2D(twoDPlatformerGame*, int, glm::vec2, glm::vec2, int, int, int, int, float,
+    Entity2D(RenderEngine2D*, twoDPlatformerGame*, std::vector<weaponInfo*>, glm::vec2, glm::vec2, int, int, int, int, float,
              float, int,
              int = 1, int = 1, glm::vec4 = glm::vec4(1.0));
 
-    void deathEffect(RenderEngine2D*, float,  int);
+    void deathEffect(glm::vec2, float,  int);
 
     void refreshEntity();
 
@@ -92,10 +94,10 @@ public:
 
     int getFullHp();
 
-    int getAttackDelayValue();
+    int getAttackDelayValue(int = 0);
 
-    int getActiveWeaponNum();
-    void setActiveWeaponNum(int);
+    int getActiveWeaponNum(int=0);
+    void setActiveWeaponNum(int, int=0);
 
     int getEnergy();
 
@@ -103,9 +105,9 @@ public:
 
     void setHp(int);
 
-    float getTakenDmg();
+    void addWeapon(weaponInfo*);
 
-    void setTakenDmg(float);
+    void setWeaponPos();
 
     glm::vec2 getHitBox();
 
@@ -120,8 +122,6 @@ public:
     glm::vec2 getFaceDirection();
 
     glm::vec2 getMovementSpeed();
-
-    glm::vec2 getMovementForce();
 
     float getJumpForce();
 
@@ -141,11 +141,9 @@ public:
 
     void removeBullet(int);
 
-    void setFaceDirection(glm::vec2);
-
     void setMovementSpeed(glm::vec2);
 
-    void setMovementForce(glm::vec2);
+    void setFaceDirection(glm::vec2);
 
     void setJumpForce(float);
 

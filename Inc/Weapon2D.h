@@ -19,10 +19,23 @@ struct Bullet
     float damage;
     glm::vec2 pos;
     glm::vec2 siz;
-    glm::vec2 direction;
-    float speed;
+    float defaultSpeed;
+    glm::vec2 speed;
     glm::vec4 col;
     int textureNum;
+    int type;
+};
+
+struct weaponInfo{
+
+    glm::vec2 relativePos;
+    glm::vec2 realPos;
+    glm::vec2 siz;
+    glm::vec2 faceDirection;
+    bool staticPos;
+    float attackDelay;
+    int weaponTurn;
+    int num;
 };
 
 class Weapon2D
@@ -34,11 +47,13 @@ private:
     float bulletSpeed;
     float attackCost;
 
-    int weaponIsShown;
+    int weaponShown;
+
+    int bullelttType;
 
 public:
 
-    Weapon2D(float, float, float, float, int, int = 1);
+    Weapon2D(float, float, float, float, int, int, int = 1);
 
     float getAttackDamage();
     float getAttackDelay();
@@ -47,7 +62,7 @@ public:
     int getTextureNum();
     int getBulletSpeed();
 
-    int getWeaponShown();
+    int weaponIsShown();
 
     void setAttackDamage(float);
     void setAttackDelay(float);
@@ -59,6 +74,7 @@ public:
 
     void setWeaponShown(int);
 
+    int getType();
 
 };
 

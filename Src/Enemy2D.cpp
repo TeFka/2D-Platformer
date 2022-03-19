@@ -2,29 +2,75 @@
 #include "../Inc/Enemy2D.h"
 #include "../Inc/Player2D.h"
 
-Enemy2D::Enemy2D(twoDPlatformerGame* activeGame, int initialWeaponNum, int type, glm::vec2 pos, glm::vec2 dimensions, int health, int regen, int energy, int energyRegen,
+Enemy2D::Enemy2D(RenderEngine2D* engine, twoDPlatformerGame* activeGame, std::vector<weaponInfo*> weaponInf, int type, glm::vec2 pos, glm::vec2 dimensions, int health, int regen, int energy, int energyRegen,
                  float speed, float jumpForce, int textureN,
                  int terrainEffect,int gravityEffect, glm::vec4 col,
                  float reactionD)
-    : Entity2D(activeGame, initialWeaponNum, pos, dimensions,
+    : Entity2D(engine, activeGame, weaponInf, pos, dimensions,
                health, regen, energy, energyRegen,speed,jumpForce, textureN,terrainEffect, gravityEffect, col)
 {
     this->enemyType = type;
     this->reactionDistance=reactionD;
 }
 
-void Enemy2D::AIaction(float deltaTime)
+void Enemy2D::calcFaceDirection(glm::vec2 lookPos)
 {
+    this->faceDirection = glm::normalize(lookPos-this->pos);
+
+}
+
+void Enemy2D::calcWeaponDirection(int index, glm::vec2 lookPos){
+
+    this->activeWeapons[index]->faceDirection = glm::normalize(lookPos-this->activeWeapons[index]->realPos);
+        if(this->theGame->getWeaponType(this->activeWeapons[index]->num-1)->weaponIsShown())
+        {
+            if(lookPos.x>this->activeWeapons[index]->realPos.x)
+            {
+                if(!this->activeWeapons[index]->staticPos){
+                    this->activeWeapons[index]->relativePos.x = 1.0;
+                }
+                if(lookPos.y<this->activeWeapons[index]->realPos.y)
+                {
+                    this->activeWeapons[index]->weaponTurn = 270 + int(90-acos((lookPos.x-this->activeWeapons[index]->realPos.x)/glm::length(lookPos-this->activeWeapons[index]->realPos))*180/PI);
+                }
+                else
+                {
+                    this->activeWeapons[index]->weaponTurn = int(acos((lookPos.x-this->activeWeapons[index]->realPos.x)/glm::length(lookPos-this->activeWeapons[index]->realPos))*180/PI);
+                }
+            }
+            else
+            {
+                if(!this->activeWeapons[index]->staticPos){
+                    this->activeWeapons[index]->relativePos.x = -1.0;
+                }
+
+                if(lookPos.y>this->activeWeapons[index]->realPos.y)
+                {
+                    this->activeWeapons[index]->weaponTurn = 90 + (90 - int(acos((this->activeWeapons[index]->realPos.x-lookPos.x)/glm::length(lookPos-this->activeWeapons[index]->realPos))*180/PI));
+                }
+                else
+                {
+                    this->activeWeapons[index]->weaponTurn = 180 + int((acos((this->activeWeapons[index]->realPos.x-lookPos.x)/glm::length(lookPos-this->activeWeapons[index]->realPos))*180/PI));
+                }
+
+            }
+        }
+
+}
+
+void Enemy2D::AIaction()
+{
+    this->calcFaceDirection(this->theGame->getPlayer()->getPos());
     switch(this->enemyType)
     {
     case 1:
     {
-        this->faceDirection = glm::normalize(this->theGame->getPlayer()->getPos()-this->pos);
+        this->calcWeaponDirection(0, this->theGame->getPlayer()->getPos());
         if(this->movementSpeed.y>=0.0)
         {
             if(this->blockedSides[0]||this->blockedSides[1])
             {
-                this->movementForce.y=-this->jumpForce;
+                this->movementSpeed.y=-this->jumpForce*this->theGame->getGameSpeed();
             }
         }
         if(glm::length(this->theGame->getPlayer()->getPos()-this->pos)>reactionDistance)
@@ -34,17 +80,16 @@ void Enemy2D::AIaction(float deltaTime)
         else
         {
             this->movementSpeed=glm::vec2(0.0);
-            if(this->attackDelayValue<=0.0)
+            if(this->activeWeapons[0]->attackDelay<=0.0)
             {
-                this->attackDelayValue=this->theGame->getWeaponType(this->activeWeaponNum)->getAttackDelay();
-                this->shoot(glm::vec4(1.0,0.0,0.0,1.0));
+                this->activeWeapons[0]->attackDelay=this->theGame->getWeaponType(this->activeWeapons[0]->num-1)->getAttackDelay();
+                this->useWeapon(glm::vec4(1.0,0.0,0.0,1.0));
             }
         }
         break;
     }
     case 2:
     {
-        this->faceDirection = glm::normalize(this->theGame->getPlayer()->getPos()-this->pos);
         if(glm::length(this->theGame->getPlayer()->getPos()-this->pos)>reactionDistance)
         {
             this->movementSpeed.x = this->faceDirection.x*this->defaultSpeed;
@@ -52,35 +97,41 @@ void Enemy2D::AIaction(float deltaTime)
         }
         else
         {
-            if(this->attackDelayValue<=0.0)
+            if(this->activeWeapons[0]->attackDelay<=0.0)
             {
-                this->attackDelayValue=this->theGame->getWeaponType(this->activeWeaponNum)->getAttackDelay();
-                this->movementForce = this->faceDirection*this->jumpForce;
+                this->activeWeapons[0]->attackDelay=this->theGame->getWeaponType(this->activeWeapons[0]->num-1)->getAttackDelay();
+                this->movementSpeed = this->faceDirection*this->jumpForce*this->theGame->getGameSpeed();
             }
         }
-        if(this->movementForce.x>0.5)
-        {
-            this->movementForce.x -= 10.0f*deltaTime;
+        if(length(this->movementSpeed)>2*this->defaultSpeed){
+            this->entityTurn++;
+            if(this->entityTurn>=360){
+                this->entityTurn = 0;
+            }
         }
-        else if(this->movementForce.x<-0.5)
+        if(this->movementSpeed.x>0.5)
         {
-            this->movementForce.x += 10.0f*deltaTime;
+            this->movementSpeed.x -= 10.0f*this->renderEngine->getDeltaTime();
         }
-        else
+        else if(this->movementSpeed.x<-0.5)
         {
-            this->movementForce.x = 0;
-        }
-        if(this->movementForce.y>0.5)
-        {
-            this->movementForce.y -= 10.0f*deltaTime;
-        }
-        else if(this->movementForce.y<-0.5)
-        {
-            this->movementForce.y += 10.0f*deltaTime;
+            this->movementSpeed.x += 10.0f*this->renderEngine->getDeltaTime();
         }
         else
         {
-            this->movementForce.y = 0;
+            this->movementSpeed.x = 0;
+        }
+        if(this->movementSpeed.y>0.5)
+        {
+            this->movementSpeed.y -= 10.0f*this->renderEngine->getDeltaTime();
+        }
+        else if(this->movementSpeed.y<-0.5)
+        {
+            this->movementSpeed.y += 10.0f*this->renderEngine->getDeltaTime();
+        }
+        else
+        {
+            this->movementSpeed.y = 0;
         }
         break;
     }
@@ -96,16 +147,15 @@ void Enemy2D::AIaction(float deltaTime)
                     this->movementSpeed.x = 0.0;
                     for(int i = 0; i<bulletAmount; i++)
                     {
-                        this->faceDirection.x = (-1.0+(i*(float)2/bulletAmount));
-                        this->faceDirection.y = -(1.0-((sqrt(((bulletAmount/2)-i)*((bulletAmount/2)-i))/(bulletAmount/2))));
-                        this->shoot(glm::vec4(1.0,0.0,0.0,1.0));
+                        this->activeWeapons[0]->faceDirection.x = (-1.0+(i*(float)2/bulletAmount));
+                        this->activeWeapons[0]->faceDirection.y = -(1.0-((sqrt(((bulletAmount/2)-i)*((bulletAmount/2)-i))/(bulletAmount/2))));
+                        this->useWeapon(glm::vec4(1.0,0.0,0.0,1.0));
                     }
-                    this->shoot(glm::vec4(1.0,0.0,0.0,1.0));
-                    this->attackDelayValue=this->theGame->getWeaponType(this->activeWeaponNum)->getAttackDelay();
+                    this->activeWeapons[0]->attackDelay=this->theGame->getWeaponType(this->activeWeapons[0]->num-1)->getAttackDelay();
                 }
-                if(this->attackDelayValue<=0.0)
+                if(this->activeWeapons[0]->attackDelay<=0.0)
                 {
-                    this->movementForce.y=-this->jumpForce;
+                    this->movementSpeed.y=-this->jumpForce*this->theGame->getGameSpeed();
                 }
             }
             else
@@ -116,9 +166,53 @@ void Enemy2D::AIaction(float deltaTime)
         }
         break;
     }
-    case 4:
+    case 101:
     {
+        if(glm::length(this->theGame->getPlayer()->getPos()-this->pos)>this->hitbox.x)
+        {
+            if(this->movementSpeed.y<0.01&&this->movementSpeed.y>-0.01)
+            {
+                if(this->movementSpeed.x != 0.0)
+                {
+                    this->movementSpeed.x = 0.0;
+                }
+                if(this->blockedSides[0]||this->blockedSides[1])
+                {
+                    this->movementSpeed.y=-3*this->jumpForce*this->theGame->getGameSpeed();
+                }
+                else{
+                    this->movementSpeed.y=-this->jumpForce*this->theGame->getGameSpeed();
+                }
+            }
+            else
+            {
+                this->faceDirection = glm::normalize(this->theGame->getPlayer()->getPos()-this->pos);
+                this->movementSpeed.x = this->faceDirection.x*this->defaultSpeed;
+            }
+        }
+        if(glm::length(this->theGame->getPlayer()->getPos()-this->pos)<this->theGame->getWidth())
+        {
+            for(int i = 0; i<this->activeWeapons.size(); i++){
 
+                if(this->activeWeapons[i]->attackDelay<=0){
+                    if(this->activeWeapons[i]->num == 3){
+
+                        this->calcWeaponDirection(i, glm::vec2(this->pos.x-this->hitbox.x,this->pos.y+this->hitbox.y/100*((rand() % 20)+1-20)));
+
+                    }
+                    else if(this->activeWeapons[i]->num == 4){
+                        this->calcWeaponDirection(i, glm::vec2(this->pos.x,this->pos.y-this->hitbox.y*(0.75+(((rand() % 25)+1-25)/100))));
+                    }
+                    else{
+                        this->calcWeaponDirection(0, this->theGame->getPlayer()->getPos());
+                    }
+
+                    this->useWeapon(glm::vec4(1.0,0.0,0.0,1.0), i);
+                }
+
+
+            }
+        }
         break;
     }
     case 5:
@@ -147,18 +241,25 @@ void Enemy2D::reactToBullets()
     }
 }
 
-void Enemy2D::update(RenderEngine2D* engine, float deltaTime)
+void Enemy2D::update()
 {
     if(this->iteration>10)
     {
-        this->AIaction(deltaTime);
-        this->generalUpdate(deltaTime);
-        if(this->affectionByTerrain)
-        {
-            this->collisionDetection(engine, deltaTime);
-        }
-        this->updateMovement(deltaTime);
         this->reactToBullets();
+
+        this->AIaction();
+
+        this->generalUpdate();
+
+        if(this->health<=0){
+
+            if(this->enemyType>100){
+
+                this->theGame->setBossState(false);
+
+            }
+
+        }
     }
     else
     {
@@ -166,16 +267,27 @@ void Enemy2D::update(RenderEngine2D* engine, float deltaTime)
     }
 }
 
-void Enemy2D::drawEnemy(RenderEngine2D *engine, glm::vec2 relativePos)
+void Enemy2D::drawEnemy(glm::vec2 relativePos)
 {
     for(int i = 0; i<this->shotBullets.size(); i++)
     {
-        engine->setSprite(glm::vec2(this->shotBullets[i]->pos.x+this->theGame->getWidth()/2-relativePos.x,
-                                    this->shotBullets[i]->pos.y+this->theGame->getHeight()/2-relativePos.y),
-                          this->shotBullets[i]->siz,this->shotBullets[i]->col,this->shotBullets[i]->textureNum);
+        this->renderEngine->setSprite(this->shotBullets[i]->pos+this->theGame->getMiddlePos()-relativePos,
+                                      this->shotBullets[i]->siz,this->shotBullets[i]->col,this->shotBullets[i]->textureNum);
 
     }
-    engine->setSprite(glm::vec2(this->pos.x+this->theGame->getWidth()/2-relativePos.x,
-                                this->pos.y+this->theGame->getHeight()/2-relativePos.y),
-                      this->hitbox, this->color, this->textureNum);
+
+    this->renderEngine->setSprite(this->pos+this->theGame->getMiddlePos()-relativePos,
+                                  this->hitbox, this->color, this->textureNum, this->entityTurn);
+
+    for(int i = 0; i<this->activeWeapons.size(); i++)
+    {
+        if(this->theGame->getWeaponType(this->activeWeapons[i]->num-1)->weaponIsShown())
+        {
+            this->renderEngine->setSprite(this->activeWeapons[i]->realPos+this->theGame->getMiddlePos()-relativePos,
+                                          glm::vec2(this->activeWeapons[i]->siz.x*this->hitbox.x, this->activeWeapons[i]->siz.y*this->hitbox.y), this->color,
+                                          this->theGame->getWeaponType(this->activeWeapons[i]->num-1)->getTextureNum(),
+                                          this->activeWeapons[i]->weaponTurn);
+        }
+    }
+
 }

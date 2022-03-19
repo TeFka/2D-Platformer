@@ -31,9 +31,11 @@ struct gameObj
 class twoDPlatformerGameLevel
 {
 private:
+    RenderEngine2D* renderEngine;
     int windwW;
     int windwH;
     glm::vec2 activeCenter;
+    int levelWidth;
     int levelHeight;
     glm::vec2 brickSize;
     int brickCount = 0;
@@ -46,16 +48,17 @@ private:
 
     glm::vec2 playerPos;
 public:
-    twoDPlatformerGameLevel(const GLchar*, glm::vec2, int, int, int, int);
+    twoDPlatformerGameLevel(RenderEngine2D*, const GLchar*, glm::vec2, int, int, int, int);
 
     int getActiveBrickCount();
     glm::vec2 getBrickSize();
+    float getLevelWidth();
 
     std::vector<gameObj*>& getActiveBricks();
 
     void update(glm::vec2 pos);
 
-    void draw(RenderEngine2D*, glm::vec2);
+    void draw(glm::vec2);
 
 private:
     void init(std::vector<std::vector<int>>);

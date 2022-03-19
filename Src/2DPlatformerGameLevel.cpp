@@ -1,12 +1,13 @@
-
 #include "../Inc/2DPlatformerGameLevel.h"
 
-twoDPlatformerGameLevel::twoDPlatformerGameLevel(const GLchar *file, glm::vec2 brickSiz, int width, int height, int textNum1, int textNum2)
+twoDPlatformerGameLevel::twoDPlatformerGameLevel(RenderEngine2D* engine, const GLchar *file, glm::vec2 brickSiz, int width, int height, int textNum1, int textNum2)
 {
+    this->renderEngine = engine;
     this->brickTextr = textNum1;
     this->solidTextr = textNum2;
     this->brickSize = brickSiz;
 
+    this->levelWidth = 0;
     this->windwW = width;
     this->windwH = height;
     int tileCode;
@@ -59,6 +60,11 @@ std::vector<gameObj*>& twoDPlatformerGameLevel::getActiveBricks()
     return this->activeBricks;
 }
 
+float twoDPlatformerGameLevel::getLevelWidth(){
+
+    return this->levelWidth;
+}
+
 void twoDPlatformerGameLevel::update(glm::vec2 pos)
 {
     this->activeBricks.clear();
@@ -72,13 +78,13 @@ void twoDPlatformerGameLevel::update(glm::vec2 pos)
     activeBrickCount = this->activeBricks.size();
 }
 
-void twoDPlatformerGameLevel::draw(RenderEngine2D* engine, glm::vec2 pos)
+void twoDPlatformerGameLevel::draw(glm::vec2 pos)
 {
     for(int n = 0; n<this->activeBrickCount; n++)
     {
         if(activeBricks[n]->exsist==1)
         {
-            engine->setSprite(glm::vec2(activeBricks[n]->pos.x+this->windwW/2-pos.x,activeBricks[n]->pos.y+this->windwH/2-pos.y),
+            this->renderEngine->setSprite(glm::vec2(activeBricks[n]->pos.x+this->windwW/2-pos.x,activeBricks[n]->pos.y+this->windwH/2-pos.y),
                               activeBricks[n]->siz,glm::vec4(activeBricks[n]->col,0.8),activeBricks[n]->textNum);
         }
     }
@@ -121,6 +127,10 @@ void twoDPlatformerGameLevel::init(std::vector<std::vector<int>> tileData)
                 brickCount++;
                 this->bricks.push_back(obj);
             }
+            if(this->levelWidth < this->brickSize.x*x){
+                this->levelWidth  = this->brickSize.x*x;
+            }
         }
     }
 }
+

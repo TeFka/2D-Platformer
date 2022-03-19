@@ -18,6 +18,7 @@
 #include<vector>
 #include<map>
 #include<tuple>
+#include<math.h>
 
 #include<glm.hpp>
 #include<gtc/matrix_transform.hpp>
@@ -31,6 +32,8 @@
 #include<Texture.h>
 
 #pragma once
+
+#define PI 3.14159265
 
 struct basicVertex
 {
@@ -52,30 +55,6 @@ struct Character
     glm::ivec2 siz;
     glm::ivec2 bear;
     GLuint advance;
-};
-
-struct particle
-{
-    glm::vec2 pos;
-    glm::vec2 velocity;
-    glm::vec4 color;
-    float life;
-    particle():pos(0.0),velocity(0.0),color(1.0),life(0.0) {}
-};
-
-struct particleEffect
-{
-    int id;
-    float life;
-    float partcLife;
-    int particleGenerationRate;
-    glm::vec2 pos;
-    glm::vec2 offset;
-    glm::vec2 siz;
-    float velocity;
-    glm::vec4 color;
-    int textNum;
-    std::vector<particle> particles;
 };
 
 class RenderEngine2D
@@ -150,35 +129,26 @@ private:
     std::vector<Shader*> allShaders;
 
     std::vector<Texture*> blockTextures;
-    unsigned int textureArray;
     std::vector<Texture*> particleTextures;
     int blockTexturesAmount = 0;
     int particleTexturesAmount = 0;
 
-    std::vector<glm::vec3> lightPositions;
+    unsigned int textureArray;
 
-    std::vector<particleEffect*> temporaryParticleEffects;
-    std::vector<particleEffect*> constantParticleEffects;
-    int particlesNr = 0;
-    int lastUsedParticle = 0;
-    int createdParticles = 0;
-    std::vector<int> particleEffectDestructor;
+    std::vector<glm::vec3> lightPositions;
 
     //rendering
     std::vector<basicVertex> vertices;
     std::vector<basicVertex> particleVertices;
     std::vector<basicVertex> transparentVertices;
 
+    glm::vec2 rotation;
+
     //other
     std::map<GLchar, Character> characters;
 
     //test
     std::vector<glm::vec2> testVertices;
-
-    //functions
-    int firstUnusedParticle(int type, int index);
-
-    void respawnParticle(particle&,float, glm::vec2, float, glm::vec2, glm::vec4);
 
     std::map<char, Character> setTextType(const char*);
 
@@ -221,23 +191,17 @@ public:
 
     void setText(const char*);
 
-    void particleSetup(int=500);
-
     float getDeltaTime();
 
     GLFWwindow* getWindow();
 
     void writeText(int, std::string, GLfloat, GLfloat,GLfloat,glm::vec3);
 
-    void setSprite(glm::vec2, glm::vec2, glm::vec4, int);
+    void addParticle(glm::vec2, glm::vec2, glm::vec4, int);
 
-    void setTransparentSprite(glm::vec2, glm::vec2, glm::vec4, int);
+    void setSprite(glm::vec2, glm::vec2, glm::vec4, int, int=0);
 
-    void createParticleEffect(glm::vec2, float, float, int, glm::vec2, float, glm::vec2,glm::vec4, int, int,int=0);
-
-    void updateParticleEffect(int, glm::vec2);
-
-    void makeParticleEffect();
+    void setTransparentSprite(glm::vec2, glm::vec2, glm::vec4, int, int=0);
 
     void clearVerts();
 

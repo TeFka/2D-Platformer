@@ -1,5 +1,5 @@
-#ifndef ENEMY2D_H_INCLUDED
-#define ENEMY2D_H_INCLUDED
+#ifndef PET_H_INCLUDED
+#define PET_H_INCLUDED
 
 #include<iostream>
 #include<sstream>
@@ -17,7 +17,7 @@
 #include "2DPlatformerGame.h"
 #include "Entity2D.h"
 
-class Enemy2D : public Entity2D
+class Pet2D : public Entity2D
 {
 private:
 
@@ -28,13 +28,10 @@ private:
 
 public:
 
-    Enemy2D(RenderEngine2D*, twoDPlatformerGame*, std::vector<weaponInfo*>, int,glm::vec2, glm::vec2, int, int, int, int,
+    Enemy2D(RenderEngine2D*, twoDPlatformerGame*, int, int,glm::vec2, glm::vec2, int, int, int, int,
             float, float, int,
             int = 1,int = 1, glm::vec4 = glm::vec4(1.0),
             float = 20.0);
-
-    void calcFaceDirection(glm::vec2);
-    void calcWeaponDirection(int, glm::vec2);
 
     void reactToBullets();
 
@@ -43,4 +40,4 @@ public:
     void drawEnemy(glm::vec2);
 };
 
-#endif // ENEMY2D_H_INCLUDED
+#endif // PET_H_INCLUDED

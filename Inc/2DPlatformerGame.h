@@ -16,6 +16,7 @@
 #include<glm/vec4.hpp>
 
 #include "RenderEngine2D.h"
+#include "ParticleEngine2D.h"
 
 #include "2DPlatformerGameLevel.h"
 #include "Weapon2D.h"
@@ -39,6 +40,9 @@ class twoDPlatformerGame
 {
 
 private:
+
+    RenderEngine2D* renderEngine;
+    ParticleEngine2D* particleEngine;
     GLboolean keysProc[1024];
 
     int width = 1200;
@@ -51,15 +55,16 @@ private:
     double mouseX = 0;
     double mouseY = 0;
 
-    float GRAVITY = 2.0f;
+    float GRAVITY = 30.0f;
 
     int arrayGoBack = 0;
 
     //game variables
     int currLevel = 1;
     float enemyCounter = 3.0;
-    int enemyAmount = 10;
-    int enemyLimit = 1;
+    int enemyLimit = 5;
+    bool bossBattle;
+    bool bossAlive;
 
     Player2D* thePlayer;
 
@@ -73,7 +78,7 @@ private:
 
 public:
 
-    twoDPlatformerGame(int, int, int);
+    twoDPlatformerGame(RenderEngine2D*, ParticleEngine2D*, int, int, int);
 
     ~twoDPlatformerGame();
 
@@ -81,23 +86,27 @@ public:
 
     void refreshGame();
 
-    void systemInput(GLFWwindow*, float);
+    void systemInput();
 
-    void mouseInput(GLFWwindow*);
+    void mouseInput();
 
-    void enemyUpdate(RenderEngine2D*);
+    void enemyUpdate();
 
-    void mainUpdate(RenderEngine2D*, float);
+    void mainUpdate();
 
-    void spritePhase(RenderEngine2D*);
+    void spritePhase();
 
     void addLevel(const GLchar*, glm::vec2, int, int);
 
-    void addWeaponType(float, float, float, float, int, int);
+    void addWeaponType(float, float, float, float, int, int, int=1);
+
+    ParticleEngine2D* getParticleEngine();
 
     int getWidth();
 
     int getHeight();
+
+    glm::vec2 getMiddlePos();
 
     gameSTATE getGameState();
 
@@ -114,18 +123,20 @@ public:
 
     int getCurrLevel();
     float getEnemyCounter();
-    int getEnemyAmount();
     int getEnemyLimit();
 
     Weapon2D* getWeaponType(int);
 
     std::vector<Enemy2D*>& getEnemies();
+    Enemy2D* getEnemy(int);
+    int getEnemyAmount();
 
     twoDPlatformerGameLevel* getLevel(int);
 
     void setGameState(gameSTATE);
 
     void setPlayMode(int);
+    void setBossState(bool);
 
     void setGameSpeed(float);
     void setGameRefresh(int);

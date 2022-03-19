@@ -20,32 +20,35 @@ class Player2D:public Entity2D
 {
 
 private:
+
     glm::vec2 relativePos;
     glm::vec2 localPos;
     float imunityPeriod = 1.0f;
     float imunityCounter= 1.0f;
+    int weaponIndex = 0;
     void collisionDamage();
 public:
 
-    Player2D(twoDPlatformerGame*, int, glm::vec2, glm::vec2, int, int, int, int,
+    Player2D(RenderEngine2D*, twoDPlatformerGame*, std::vector<weaponInfo*>, glm::vec2, glm::vec2, int, int, int, int,
              float,float, int,
              int = 1,int = 1,glm::vec4 = glm::vec4(1.0));
 
-    void keyboardCommand(GLFWwindow*,float);
+    void keyboardCommand();
 
-    void setFaceDirection(glm::vec2);
+    void calcFaceDirection(glm::vec2);
 
     void refresh(glm::vec2 pos);
 
     void reactToBullets();
 
-    void updatePlayerMovement(float);
+    void updatePlayerMovement();
 
-    void update(GLFWwindow*, RenderEngine2D*, float);
+    void update();
 
-    void drawPlayer(RenderEngine2D *engine);
+    void drawPlayer();
 
     glm::vec2 getRelativePos();
+    glm::vec2 getLocalPos();
 };
 
 #endif // PLAYER2D_H_INCLUDED
